@@ -1,0 +1,6 @@
+module.exports = {
+  MYSQL_HOST: process.env.MYSQL_SERVER_HOST,
+  MYSQL_USER: process.env.MYSQL_SERVER_USER,
+  MYSQL_PASSWORD: process.env.MYSQL_SERVER_PASSWORD,
+  MYSQL_DATABASE: process.env.MYSQL_SERVER_DATABASE,
+};
