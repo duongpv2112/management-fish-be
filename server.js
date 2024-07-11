@@ -9,6 +9,16 @@ const PORT = process.env.NODE_PORT;
 const USER_MONGODB = process.env.USER_MONGODB;
 const PWD_MONGODB = process.env.PWD_MONGODB;
 
+const corsOptions = {
+  origin: "http://localhost:3001/", // Allow only this origin
+  methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Allowed methods
+  allowedHeaders: ["Content-Type", "Authorization"], // Allowed headers
+  credentials: true, // Allow credentials
+  optionsSuccessStatus: 204, // Some legacy browsers choke on 204
+};
+
+app.use(cors(corsOptions));
+
 // parse requests of content-type - application/json
 app.use(express.json());
 
