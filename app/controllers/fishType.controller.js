@@ -19,6 +19,25 @@ const getFishTypes = async (req, res) => {
   res.json(response);
 };
 
+const getDataFish = async (req, res) => {
+  let response = {
+    success: true,
+    data: [],
+    message: "",
+  };
+
+  let result = await fishTypeService.getDataFish();
+  if (result) {
+    response.data = result;
+    response.message = "Lấy danh sách dữ liệu cá thành công!";
+  } else {
+    response.success = false;
+    response.message = "Lấy danh sách dữ liệu cá không thành công!";
+  }
+
+  res.json(response);
+};
+
 const createFishTypes = async (req, res) => {
   let response = {
     success: true,
@@ -41,4 +60,5 @@ const createFishTypes = async (req, res) => {
 module.exports = {
   getFishTypes,
   createFishTypes,
+  getDataFish
 };

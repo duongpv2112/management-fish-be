@@ -1,4 +1,6 @@
 const FishType = require("../models/fishType");
+const FishWeight = require("../models/fishWeight");
+
 const LogTracking = require("../models/logTracking");
 const logTrackingService = require("../services/logTracking.service");
 
@@ -9,6 +11,34 @@ const getListFishType = async () => {
     let logTracking = new LogTracking({
       fishTypeName: "",
       stepName: `Có lỗi xảy ra khi lấy danh sách loại cá!`,
+      data: error,
+    });
+    _ = await logTrackingService.createLogTracking(logTracking);
+    console.log("Có lỗi xảy ra khi lấy danh sách loại cá", error);
+  }
+};
+
+const getDataFish = async () => {
+  try {
+    let fishTypes = await FishType.find();
+    let fishWeights = await FishWeight.find();
+    const dataResult = [];
+    fishTypes.forEach((fishType) => {
+      let fishTypeClone = JSON.parse(JSON.stringify(fishType));
+      fishTypeClone.fishWeights = fishWeights
+        .filter(
+          (fishWeight) =>
+            fishWeight.fishType === fishType._id &&
+            fishWeight.isDelete === false
+        )
+        .map((fishWeight) => fishWeight.fishWeight);
+      dataResult.push(fishTypeClone);
+    });
+    return dataResult;
+  } catch (error) {
+    let logTracking = new LogTracking({
+      fishTypeName: "",
+      stepName: `Có lỗi xảy ra khi lấy dữ liệu bảng hiển thị!`,
       data: error,
     });
     _ = await logTrackingService.createLogTracking(logTracking);
@@ -43,4 +73,5 @@ const createFishType = async (fishTypeData) => {
 module.exports = {
   getListFishType,
   createFishType,
+  getDataFish,
 };

@@ -5,6 +5,8 @@ module.exports = (app) => {
 
   router.get("/getFishTypes", fishTypeController.getFishTypes);
 
+  router.get("/getDataFish", fishTypeController.getDataFish);
+
   router.post("/createFishTypes", fishTypeController.createFishTypes);
 
   app.use("/api/fish-types", router);
