@@ -19,5 +19,6 @@ require("./app/routes/fishType.routes")(app);
 require("./app/routes/fishWeight.routes")(app);
 require("./app/routes/basketType.routes")(app);
 require("./app/routes/logTracking.routes")(app);
+require("./app/routes/weighSession.routes")(app);
 
 module.exports = app;
