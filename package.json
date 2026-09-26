@@ -9,6 +9,19 @@
   },
   "scripts": {
     "start": "node server.js",
-    "build": "node server.js"
+    "build": "node server.js",
+    "test": "jest --runInBand"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "mongodb-memory-server": "^10.4.3",
+    "supertest": "^7.3.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setup.js"
+    ],
+    "testTimeout": 60000
   }
 }
