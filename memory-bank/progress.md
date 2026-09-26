@@ -51,3 +51,7 @@
 - Nhật ký phân trang ở server (`page`, `pageSize` tối đa 100).
 - Đăng nhập bằng mật khẩu dùng chung (`POST /api/auth/login`, JWT 30 ngày); mọi API khác cần token; sai 5 lần/15 phút mỗi IP thì bị chặn; CORS chỉ cho GitHub Pages và localhost:3001.
 - Cần đặt `APP_PASSWORD_HASH` và `JWT_SECRET` trên Vercel và `.env` — thiếu thì server không khởi động.
+
+## Cập nhật 2026-09-26 — Chạy local không cần Atlas
+- `npm run dev:local`: chạy BE với MongoDB tạm trong bộ nhớ, có sẵn dữ liệu mẫu, mật khẩu đăng nhập `dev-local` (chỉ dùng cho DB tạm này). Tắt là mất dữ liệu.
+- Biến `MONGODB_URI` (tùy chọn): có thì dùng nguyên chuỗi đó (MongoDB trên máy/Docker/Atlas mới), không cần `USER_MONGODB`/`PWD_MONGODB`. Script migration cũng dùng biến này.
