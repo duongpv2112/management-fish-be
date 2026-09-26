@@ -4,7 +4,7 @@ const logTrackingService = require("../services/logTracking.service");
 
 const getListBasketType = async () => {
   try {
-    return await BasketType.find();
+    return await BasketType.find({ isDelete: false }).sort({ createdAt: 1 });
   } catch (error) {
     let logTracking = new LogTracking({
       fishTypeName: "",

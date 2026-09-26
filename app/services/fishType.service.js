@@ -6,7 +6,7 @@ const logTrackingService = require("../services/logTracking.service");
 
 const getListFishType = async () => {
   try {
-    return await FishType.find();
+    return await FishType.find({ isDelete: false }).sort({ createdAt: 1 });
   } catch (error) {
     let logTracking = new LogTracking({
       fishTypeName: "",
@@ -20,17 +20,13 @@ const getListFishType = async () => {
 
 const getDataFish = async () => {
   try {
-    let fishTypes = await FishType.find();
-    let fishWeights = await FishWeight.find();
+    let fishTypes = await FishType.find({ isDelete: false }).sort({ createdAt: 1 });
+    let fishWeights = await FishWeight.find({ isDelete: false });
     const dataResult = [];
     fishTypes.forEach((fishType) => {
       let fishTypeClone = JSON.parse(JSON.stringify(fishType));
       fishTypeClone.fishWeights = fishWeights
-        .filter(
-          (fishWeight) =>
-            fishWeight.fishType === fishType._id &&
-            fishWeight.isDelete === false
-        )
+        .filter((fishWeight) => fishWeight.fishType === fishType._id)
         .map((fishWeight) => fishWeight.fishWeight);
       dataResult.push(fishTypeClone);
     });
