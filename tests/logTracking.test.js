@@ -1,5 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
+const { authHeader } = require("./helpers/auth");
 const LogTracking = require("../app/models/logTracking");
 
 beforeEach(async () => {
@@ -15,7 +16,7 @@ beforeEach(async () => {
   );
 });
 
-const getLogs = (query) => request(app).get("/api/log-trackings/getLogTrackings").query(query);
+const getLogs = (query) => request(app).get("/api/log-trackings/getLogTrackings").set(authHeader()).query(query);
 
 test("trang 2 cỡ 20 có 5 dòng, total 25", async () => {
   const res = await getLogs({ page: 2, pageSize: 20 });

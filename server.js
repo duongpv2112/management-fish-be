@@ -1,5 +1,15 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
+const { assertRequiredEnv } = require("./app/config/env");
+
+// Thiếu biến môi trường bắt buộc thì không khởi động, tránh chạy mà không có bảo vệ
+try {
+  assertRequiredEnv(["USER_MONGODB", "PWD_MONGODB", "JWT_SECRET", "APP_PASSWORD_HASH"]);
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
+
 const app = require("./app");
 const { buildDbURI } = require("./app/config/database");
 

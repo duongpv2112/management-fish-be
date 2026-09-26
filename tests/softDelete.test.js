@@ -1,5 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
+const { authHeader } = require("./helpers/auth");
 const FishType = require("../app/models/fishType");
 const BasketType = require("../app/models/basketType");
 const FishWeight = require("../app/models/fishWeight");
@@ -18,24 +19,24 @@ beforeEach(async () => {
 });
 
 test("getFishTypes bỏ loại cá đã xóa", async () => {
-  const res = await request(app).get("/api/fish-types/getFishTypes");
+  const res = await request(app).get("/api/fish-types/getFishTypes").set(authHeader());
   expect(res.body.data.map((x) => x.fishName)).toEqual(["Cá trắm"]);
 });
 
 test("getDataFish bỏ loại cá và bản ghi cân đã xóa", async () => {
-  const res = await request(app).get("/api/fish-types/getDataFish");
+  const res = await request(app).get("/api/fish-types/getDataFish").set(authHeader());
   expect(res.body.data).toHaveLength(1);
   expect(res.body.data[0].fishName).toBe("Cá trắm");
   expect(res.body.data[0].fishWeights).toEqual([25]);
 });
 
 test("getBasketTypes bỏ giỏ đã xóa", async () => {
-  const res = await request(app).get("/api/basket-types/getBasketTypes");
+  const res = await request(app).get("/api/basket-types/getBasketTypes").set(authHeader());
   expect(res.body.data.map((x) => x.basketName)).toEqual(["Giỏ to"]);
 });
 
 test("danh mục sắp theo createdAt tăng dần", async () => {
   await FishType.create({ fishName: "Cá chép" });
-  const res = await request(app).get("/api/fish-types/getFishTypes");
+  const res = await request(app).get("/api/fish-types/getFishTypes").set(authHeader());
   expect(res.body.data.map((x) => x.fishName)).toEqual(["Cá trắm", "Cá chép"]);
 });

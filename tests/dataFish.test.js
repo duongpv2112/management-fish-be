@@ -1,5 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
+const { authHeader } = require("./helpers/auth");
 const FishType = require("../app/models/fishType");
 const BasketType = require("../app/models/basketType");
 const FishWeight = require("../app/models/fishWeight");
@@ -14,7 +15,7 @@ test("getDataFish trả fishWeightItems có _id, sắp theo createdAt, fishWeigh
   const second = await FishWeight.create({ fishType: tram._id, basketType: gio._id, fishWeight: 10.5, session: session._id });
   await FishWeight.create({ fishType: tram._id, fishWeight: 99, isDelete: true, session: session._id });
 
-  const res = await request(app).get("/api/fish-types/getDataFish");
+  const res = await request(app).get("/api/fish-types/getDataFish").set(authHeader());
   const row = res.body.data[0];
   expect(row.fishWeights).toEqual([25, 10.5]);
   expect(row.fishWeightItems.map((i) => i._id)).toEqual([first._id, second._id]);

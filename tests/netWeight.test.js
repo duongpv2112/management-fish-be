@@ -1,5 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
+const { authHeader } = require("./helpers/auth");
 const FishType = require("../app/models/fishType");
 const BasketType = require("../app/models/basketType");
 const FishWeight = require("../app/models/fishWeight");
@@ -13,9 +14,9 @@ beforeEach(async () => {
   gio = await BasketType.create({ basketName: "Giỏ to", basketWeight: 2 });
 });
 
-const create = (body) => request(app).post("/api/fish-weights/createFishWeights").send(body);
-const update = (id, body) => request(app).put(`/api/fish-weights/updateFishWeights/${id}`).send(body);
-const remove = (id) => request(app).delete(`/api/fish-weights/deleteFishWeights/${id}`);
+const create = (body) => request(app).post("/api/fish-weights/createFishWeights").set(authHeader()).send(body);
+const update = (id, body) => request(app).put(`/api/fish-weights/updateFishWeights/${id}`).set(authHeader()).send(body);
+const remove = (id) => request(app).delete(`/api/fish-weights/deleteFishWeights/${id}`).set(authHeader());
 
 test("trừ trọng lượng giỏ; sửa giỏ sau đó không làm đổi bản ghi cũ", async () => {
   const res = await create({ fishType: tram._id, basketType: gio._id, fishWeight: 25.5 });
@@ -25,6 +26,7 @@ test("trừ trọng lượng giỏ; sửa giỏ sau đó không làm đổi bả
 
   await request(app)
     .put(`/api/basket-types/updateBasketTypes/${gio._id}`)
+    .set(authHeader())
     .send({ basketName: "Giỏ to", basketWeight: 3 });
   const saved = await FishWeight.findById(res.body.data._id);
   expect(saved.netWeight).toBe(23.5);
