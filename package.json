@@ -13,7 +13,8 @@
     "start": "node server.js",
     "build": "node server.js",
     "test": "jest --runInBand",
-    "migrate:sessions": "node scripts/migrate-sessions.js"
+    "migrate:sessions": "node scripts/migrate-sessions.js",
+    "dev:local": "node scripts/dev-local.js"
   },
   "devDependencies": {
     "jest": "^29.7.0",

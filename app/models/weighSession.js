@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const { v4: uuidv4 } = require("uuid");
+const { CURRENCIES, DEFAULT_CURRENCY } = require("../config/currency");
 const Schema = mongoose.Schema;
 
 const priceSchema = new Schema(
@@ -9,7 +10,7 @@ const priceSchema = new Schema(
       ref: "fish-type",
       required: true,
     },
-    // Đơn giá VND/kg
+    // Đơn giá cho mỗi kg, tính theo loại tiền của phiên (currency)
     unitPrice: {
       type: Number,
       required: true,
@@ -40,6 +41,12 @@ const weighSessionSchema = new Schema(
     },
     closedAt: {
       type: Date,
+    },
+    // Loại tiền của bảng giá phiên; đổi loại tiền thì bảng giá bị xóa
+    currency: {
+      type: String,
+      enum: Object.keys(CURRENCIES),
+      default: DEFAULT_CURRENCY,
     },
     prices: {
       type: [priceSchema],
