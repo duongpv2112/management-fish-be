@@ -21,6 +21,19 @@ const fishWeightSchema = new Schema(
       type: String,
       ref: "basket-type",
     },
+    // Phiên cân chứa lần cân này
+    session: {
+      type: String,
+      ref: "weigh-session",
+    },
+    // Trọng lượng giỏ tại thời điểm cân (sửa giỏ sau này không làm sai số cũ)
+    basketWeightSnapshot: {
+      type: Number,
+    },
+    // Trọng lượng thực = fishWeight − basketWeightSnapshot
+    netWeight: {
+      type: Number,
+    },
     isDelete: {
       type: Boolean,
       default: false,

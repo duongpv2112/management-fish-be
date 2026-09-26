@@ -1,33 +1,24 @@
 require("dotenv").config();
-const express = require("express");
 const mongoose = require("mongoose");
-const cors = require('cors');
+const { assertRequiredEnv } = require("./app/config/env");
+const { buildDbURI, requiredEnvNames } = require("./app/config/database");
 
-const app = express();
+// Thiếu biến môi trường bắt buộc thì không khởi động, tránh chạy mà không có bảo vệ
+try {
+  assertRequiredEnv(requiredEnvNames());
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
+
+const app = require("./app");
 
 // set port, listen for requests
 const PORT = process.env.NODE_PORT;
-const USER_MONGODB = process.env.USER_MONGODB;
-const PWD_MONGODB = process.env.PWD_MONGODB;
-
-var corsOptions = {
-  origin: "*",
-};
-
-app.use(cors(corsOptions));
-
-// parse requests of content-type - application/json
-app.use(express.json());
-
-// parse requests of content-type - application/x-www-form-urlencoded
-app.use(express.urlencoded({ extended: true }));
-
-// Replace the following with your MongoDB connection string
-const dbURI = `mongodb+srv://${USER_MONGODB}:${PWD_MONGODB}@cluster0.w4zp0gf.mongodb.net/management-fish?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Kết nối tới MongoDB
 mongoose
-  .connect(dbURI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(buildDbURI())
   .then((result) =>
     app.listen(PORT, (error) => {
       if (!error) console.log(`Server is running on port ${PORT}.`);
@@ -36,7 +27,4 @@ mongoose
   )
   .catch((err) => console.log(err));
 
-require("./app/routes/fishType.routes")(app);
-require("./app/routes/fishWeight.routes")(app);
-require("./app/routes/basketType.routes")(app);
-require("./app/routes/logTracking.routes")(app);
+module.exports = app;

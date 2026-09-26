@@ -7,5 +7,9 @@ module.exports = (app) => {
 
   router.post("/createBasketTypes", basketTypeController.createBasketTypes);
 
+  router.put("/updateBasketTypes/:basketTypeId", basketTypeController.updateBasketTypes);
+
+  router.delete("/deleteBasketTypes/:basketTypeId", basketTypeController.deleteBasketTypes);
+
   app.use("/api/basket-types", router);
 };
