@@ -30,3 +30,9 @@
 - Ban đầu, dự án được xác định là một hệ thống backend tập trung vào các API để nhập liệu, tính toán và lưu trữ dữ liệu cân cá.
 - Quyết định tập trung vào tính đơn giản và độ tin cậy, không phát triển giao diện người dùng ở giai đoạn đầu.
 - Thiết kế hệ thống linh hoạt để hỗ trợ tích hợp thiết bị cân điện tử trong tương lai đã được đưa vào kế hoạch từ đầu.
+
+## Cập nhật 2026-09-26 — Hạ tầng test & sửa lỗi (kế hoạch 02)
+- Tách `app.js` (Express + routes, export `app`) khỏi `server.js` (kết nối Mongo + listen); `npm test` chạy Jest + Supertest trên MongoDB in-memory.
+- API xóa bản ghi cân: `DELETE /api/fish-weights/deleteFishWeights/:fishWeightId` (xóa mềm, ghi LogTracking cả khi không tìm thấy id). Route `PUT /createFishWeights/:id` cũ đã gỡ.
+- `getFishTypes`, `getDataFish`, `getBasketTypes` bỏ bản ghi `isDelete: true` và sắp theo `createdAt`.
+- Vấn đề đã biết: cluster Atlas `cluster0.w4zp0gf` không còn phân giải DNS → production Vercel đang lỗi, cần tạo lại cluster/cập nhật chuỗi kết nối.
