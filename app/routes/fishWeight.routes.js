@@ -8,7 +8,12 @@ module.exports = (app) => {
   router.post("/createFishWeights", fishWeightController.createFishWeights);
 
   router.put(
-    "/createFishWeights/:fishWeightId",
+    "/updateFishWeights/:fishWeightId",
+    fishWeightController.updateFishWeights
+  );
+
+  router.delete(
+    "/deleteFishWeights/:fishWeightId",
     fishWeightController.deleteFishWeights
   );
 
