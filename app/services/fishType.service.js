@@ -21,13 +21,22 @@ const getListFishType = async () => {
 const getDataFish = async () => {
   try {
     let fishTypes = await FishType.find({ isDelete: false }).sort({ createdAt: 1 });
-    let fishWeights = await FishWeight.find({ isDelete: false });
+    let fishWeights = await FishWeight.find({ isDelete: false }).sort({ createdAt: 1 });
     const dataResult = [];
     fishTypes.forEach((fishType) => {
       let fishTypeClone = JSON.parse(JSON.stringify(fishType));
-      fishTypeClone.fishWeights = fishWeights
+      // fishWeightItems có _id để FE sửa/xóa từng lần cân; fishWeights giữ lại cho tương thích
+      fishTypeClone.fishWeightItems = fishWeights
         .filter((fishWeight) => fishWeight.fishType === fishType._id)
-        .map((fishWeight) => fishWeight.fishWeight);
+        .map((fishWeight) => ({
+          _id: fishWeight._id,
+          fishWeight: fishWeight.fishWeight,
+          basketType: fishWeight.basketType,
+          createdAt: fishWeight.createdAt,
+        }));
+      fishTypeClone.fishWeights = fishTypeClone.fishWeightItems.map(
+        (item) => item.fishWeight
+      );
       dataResult.push(fishTypeClone);
     });
     return dataResult;

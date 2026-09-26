@@ -57,8 +57,28 @@ const deleteFishWeights = async (req, res) => {
   res.json(response);
 };
 
+const updateFishWeights = async (req, res) => {
+  let response = {
+    success: true,
+    data: [],
+    message: "",
+  };
+
+  let result = await fishWeightService.updateFishWeight(req.params.fishWeightId, req.body);
+  if (result.ok) {
+    response.data = result.data;
+    response.message = "Cập nhật cân cá thành công!";
+  } else {
+    response.success = false;
+    response.message = result.message || "Cập nhật cân cá không thành công!";
+  }
+
+  res.json(response);
+};
+
 module.exports = {
   getFishWeights,
   createFishWeights,
+  updateFishWeights,
   deleteFishWeights,
 };
