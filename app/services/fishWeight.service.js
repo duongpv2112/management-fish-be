@@ -52,6 +52,15 @@ const deleteFishWeight = async (fishWeightId) => {
       { isDelete: true },
       { new: true }
     ).populate(["fishType", "basketType"]);
+    if (!result) {
+      let logTracking = new LogTracking({
+        fishTypeName: "",
+        stepName: `Xóa bản ghi cân cá: '${fishWeightId}' không thành công`,
+        data: { fishWeightId, reason: "Không tìm thấy bản ghi cân cá" },
+      });
+      _ = await logTrackingService.createLogTracking(logTracking);
+      return null;
+    }
     let logTracking = new LogTracking({
       fishTypeName: result.fishType.fishName,
       stepName: `Xóa bản ghi cân cá: '${result.fishType.fishName}' thành công`,

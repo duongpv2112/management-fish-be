@@ -45,7 +45,7 @@ const deleteFishWeights = async (req, res) => {
     message: "",
   };
 
-  let result = await fishWeightService.deleteFishWeight(req.params);
+  let result = await fishWeightService.deleteFishWeight(req.params.fishWeightId);
   if (result) {
     response.data = result;
     response.message = "Xóa cân cá thành công!";

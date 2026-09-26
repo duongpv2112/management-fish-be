@@ -7,8 +7,8 @@ module.exports = (app) => {
 
   router.post("/createFishWeights", fishWeightController.createFishWeights);
 
-  router.put(
-    "/createFishWeights/:fishWeightId",
+  router.delete(
+    "/deleteFishWeights/:fishWeightId",
     fishWeightController.deleteFishWeights
   );
 
