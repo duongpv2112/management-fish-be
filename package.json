@@ -10,7 +10,8 @@
   "scripts": {
     "start": "node server.js",
     "build": "node server.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "migrate:sessions": "node scripts/migrate-sessions.js"
   },
   "devDependencies": {
     "jest": "^29.7.0",
