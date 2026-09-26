@@ -1,5 +1,6 @@
 const FishType = require("../models/fishType");
 const FishWeight = require("../models/fishWeight");
+const WeighSession = require("../models/weighSession");
 
 const LogTracking = require("../models/logTracking");
 const logTrackingService = require("../services/logTracking.service");
@@ -18,10 +19,21 @@ const getListFishType = async () => {
   }
 };
 
-const getDataFish = async () => {
+/**
+ * Dữ liệu bảng cân: mỗi loại cá kèm các lần cân của một phiên.
+ * Không truyền sessionId thì lấy phiên đang mở; không có phiên mở thì danh sách cân rỗng.
+ */
+const getDataFish = async (sessionId) => {
   try {
     let fishTypes = await FishType.find({ isDelete: false }).sort({ createdAt: 1 });
-    let fishWeights = await FishWeight.find({ isDelete: false }).sort({ createdAt: 1 });
+    let targetSessionId = sessionId;
+    if (!targetSessionId) {
+      const openSession = await WeighSession.findOne({ status: "open", isDelete: false });
+      targetSessionId = openSession?._id ?? null;
+    }
+    let fishWeights = targetSessionId
+      ? await FishWeight.find({ isDelete: false, session: targetSessionId }).sort({ createdAt: 1 })
+      : [];
     const dataResult = [];
     fishTypes.forEach((fishType) => {
       let fishTypeClone = JSON.parse(JSON.stringify(fishType));
@@ -31,6 +43,8 @@ const getDataFish = async () => {
         .map((fishWeight) => ({
           _id: fishWeight._id,
           fishWeight: fishWeight.fishWeight,
+          netWeight: fishWeight.netWeight,
+          basketWeightSnapshot: fishWeight.basketWeightSnapshot,
           basketType: fishWeight.basketType,
           createdAt: fishWeight.createdAt,
         }));

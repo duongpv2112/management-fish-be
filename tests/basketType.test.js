@@ -1,5 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
+const { authHeader } = require("./helpers/auth");
 const BasketType = require("../app/models/basketType");
 const LogTracking = require("../app/models/logTracking");
 
@@ -11,9 +12,9 @@ beforeEach(async () => {
   nho = await BasketType.create({ basketName: "Giỏ nhỏ", basketWeight: 1 });
 });
 
-const update = (id, body) => request(app).put(`/api/basket-types/updateBasketTypes/${id}`).send(body);
-const remove = (id) => request(app).delete(`/api/basket-types/deleteBasketTypes/${id}`);
-const create = (body) => request(app).post("/api/basket-types/createBasketTypes").send(body);
+const update = (id, body) => request(app).put(`/api/basket-types/updateBasketTypes/${id}`).set(authHeader()).send(body);
+const remove = (id) => request(app).delete(`/api/basket-types/deleteBasketTypes/${id}`).set(authHeader());
+const create = (body) => request(app).post("/api/basket-types/createBasketTypes").set(authHeader()).send(body);
 
 test("sửa loại giỏ", async () => {
   const res = await update(nho._id, { basketName: " Giỏ vừa ", basketWeight: 1.5 });
@@ -56,7 +57,7 @@ test("xóa mềm loại giỏ", async () => {
   expect(res.body.success).toBe(true);
   expect(res.body.message).toBe("Xóa loại giỏ thành công!");
   expect((await BasketType.findById(to._id)).isDelete).toBe(true);
-  const list = await request(app).get("/api/basket-types/getBasketTypes");
+  const list = await request(app).get("/api/basket-types/getBasketTypes").set(authHeader());
   expect(list.body.data.map((x) => x.basketName)).toEqual(["Giỏ nhỏ"]);
 });
 

@@ -1,5 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
+const { authHeader } = require("./helpers/auth");
 const FishType = require("../app/models/fishType");
 const BasketType = require("../app/models/basketType");
 const FishWeight = require("../app/models/fishWeight");
@@ -18,7 +19,7 @@ beforeEach(async () => {
 });
 
 test("xóa mềm bản ghi cân", async () => {
-  const res = await request(app).delete(`/api/fish-weights/deleteFishWeights/${weight._id}`);
+  const res = await request(app).delete(`/api/fish-weights/deleteFishWeights/${weight._id}`).set(authHeader());
   expect(res.body.success).toBe(true);
   expect(res.body.message).toBe("Xóa cân cá thành công!");
   expect(res.body.data.isDelete).toBe(true);
@@ -28,20 +29,20 @@ test("xóa mềm bản ghi cân", async () => {
 });
 
 test("id không tồn tại → success false, không crash", async () => {
-  const res = await request(app).delete("/api/fish-weights/deleteFishWeights/khong-co");
+  const res = await request(app).delete("/api/fish-weights/deleteFishWeights/khong-co").set(authHeader());
   expect(res.body.success).toBe(false);
   expect(res.body.message).toBe("Xóa cân cá không thành công!");
   expect(await LogTracking.countDocuments({ stepName: /không thành công/ })).toBe(1);
 });
 
 test("route PUT createFishWeights/:id cũ đã bị gỡ", async () => {
-  const res = await request(app).put(`/api/fish-weights/createFishWeights/${weight._id}`);
+  const res = await request(app).put(`/api/fish-weights/createFishWeights/${weight._id}`).set(authHeader());
   expect(res.status).toBe(404);
 });
 
 describe("sửa bản ghi cân", () => {
   const update = (id, body) =>
-    request(app).put(`/api/fish-weights/updateFishWeights/${id}`).send(body);
+    request(app).put(`/api/fish-weights/updateFishWeights/${id}`).set(authHeader()).send(body);
 
   test("đổi số cân và loại cá", async () => {
     const me = await FishType.create({ fishName: "Cá mè" });

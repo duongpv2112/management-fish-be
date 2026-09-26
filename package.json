@@ -1,8 +1,10 @@
 {
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.3",
     "mongoose": "^8.4.5",
     "uuid": "^10.0.0",
     "vercel": "^34.3.0"
@@ -10,7 +12,9 @@
   "scripts": {
     "start": "node server.js",
     "build": "node server.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand",
+    "migrate:sessions": "node scripts/migrate-sessions.js",
+    "dev:local": "node scripts/dev-local.js"
   },
   "devDependencies": {
     "jest": "^29.7.0",

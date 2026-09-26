@@ -41,3 +41,21 @@
 - Loại cá, loại giỏ: thêm/sửa/xóa mềm; tên duy nhất trong bản ghi chưa xóa (trim, không phân biệt hoa thường); thêm lại tên đã xóa thì khôi phục bản ghi cũ; trọng lượng giỏ phải >= 0.
 - Sửa bản ghi cân: `PUT /api/fish-weights/updateFishWeights/:fishWeightId`.
 - `getDataFish` trả thêm `fishWeightItems` (có `_id`) cho FE sửa/xóa từng lần cân.
+
+## Cập nhật 2026-09-26 — Phiên cân & tính tiền (kế hoạch 05)
+- Resource mới `weigh-session`: tạo/đóng phiên (luôn chỉ 1 phiên mở), bảng giá theo phiên × loại cá, tổng hợp tiền `getSessionSummary`.
+- Lần cân lưu `session`, `basketWeightSnapshot`, `netWeight`; số cân phải lớn hơn trọng lượng giỏ; phiên đã đóng không sửa/xóa lần cân.
+- Script `npm run migrate:sessions` gom dữ liệu cũ vào phiên "Dữ liệu cũ" — cần sao lưu DB rồi chạy trên production SAU khi deploy BE, TRƯỚC khi deploy FE.
+
+## Cập nhật 2026-09-26 — Nhật ký & đăng nhập (kế hoạch 06)
+- Nhật ký phân trang ở server (`page`, `pageSize` tối đa 100).
+- Đăng nhập bằng mật khẩu dùng chung (`POST /api/auth/login`, JWT 30 ngày); mọi API khác cần token; sai 5 lần/15 phút mỗi IP thì bị chặn; CORS chỉ cho GitHub Pages và localhost:3001.
+- Cần đặt `APP_PASSWORD_HASH` và `JWT_SECRET` trên Vercel và `.env` — thiếu thì server không khởi động.
+
+## Cập nhật 2026-09-26 — Chạy local không cần Atlas
+- `npm run dev:local`: chạy BE với MongoDB tạm trong bộ nhớ, có sẵn dữ liệu mẫu, mật khẩu đăng nhập `dev-local` (chỉ dùng cho DB tạm này). Tắt là mất dữ liệu.
+- Biến `MONGODB_URI` (tùy chọn): có thì dùng nguyên chuỗi đó (MongoDB trên máy/Docker/Atlas mới), không cần `USER_MONGODB`/`PWD_MONGODB`. Script migration cũng dùng biến này.
+
+## Cập nhật 2026-09-26 — Loại tiền theo phiên
+- Mỗi phiên có `currency` (VND hoặc USD, mặc định lấy theo phiên gần nhất). `PUT /api/weigh-sessions/updateSessionCurrency/:id` đổi loại tiền và xóa bảng giá cũ (không quy đổi tỷ giá).
+- Đơn giá và thành tiền làm tròn theo loại tiền: VND số nguyên, USD đến cent. Phiên cũ không có trường này được coi là VND, không cần migration.

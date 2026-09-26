@@ -1,3 +1,10 @@
+const bcrypt = require("bcryptjs");
+const { TEST_PASSWORD, TEST_JWT_SECRET } = require("./helpers/auth");
+
+// Biến môi trường đăng nhập cho test (không phải giá trị thật)
+process.env.JWT_SECRET = TEST_JWT_SECRET;
+process.env.APP_PASSWORD_HASH = bcrypt.hashSync(TEST_PASSWORD, 4);
+
 const mongoose = require("mongoose");
 const { MongoMemoryServer } = require("mongodb-memory-server");
 

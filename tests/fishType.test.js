@@ -1,5 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
+const { authHeader } = require("./helpers/auth");
 const FishType = require("../app/models/fishType");
 const LogTracking = require("../app/models/logTracking");
 
@@ -11,9 +12,9 @@ beforeEach(async () => {
   me = await FishType.create({ fishName: "Cá mè" });
 });
 
-const update = (id, body) => request(app).put(`/api/fish-types/updateFishTypes/${id}`).send(body);
-const remove = (id) => request(app).delete(`/api/fish-types/deleteFishTypes/${id}`);
-const create = (body) => request(app).post("/api/fish-types/createFishTypes").send(body);
+const update = (id, body) => request(app).put(`/api/fish-types/updateFishTypes/${id}`).set(authHeader()).send(body);
+const remove = (id) => request(app).delete(`/api/fish-types/deleteFishTypes/${id}`).set(authHeader());
+const create = (body) => request(app).post("/api/fish-types/createFishTypes").set(authHeader()).send(body);
 
 test("sửa tên loại cá", async () => {
   const res = await update(me._id, { fishName: "  Cá mè hoa " });
@@ -53,7 +54,7 @@ test("xóa mềm loại cá", async () => {
   expect(res.body.success).toBe(true);
   expect(res.body.message).toBe("Xóa loại cá thành công!");
   expect((await FishType.findById(tram._id)).isDelete).toBe(true);
-  const list = await request(app).get("/api/fish-types/getFishTypes");
+  const list = await request(app).get("/api/fish-types/getFishTypes").set(authHeader());
   expect(list.body.data.map((x) => x.fishName)).toEqual(["Cá mè"]);
   expect(await LogTracking.countDocuments({ stepName: /Xóa loại cá/ })).toBe(1);
 });
