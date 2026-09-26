@@ -95,6 +95,25 @@ const updateSessionPrices = async (req, res) => {
   res.json(response);
 };
 
+const updateSessionCurrency = async (req, res) => {
+  let response = {
+    success: true,
+    data: [],
+    message: "",
+  };
+
+  let result = await weighSessionService.updateSessionCurrency(req.params.sessionId, req.body?.currency);
+  if (result.ok) {
+    response.data = result.data;
+    response.message = "Đổi loại tiền thành công!";
+  } else {
+    response.success = false;
+    response.message = result.message || "Đổi loại tiền không thành công!";
+  }
+
+  res.json(response);
+};
+
 const getSessionSummary = async (req, res) => {
   let response = {
     success: true,
@@ -121,4 +140,5 @@ module.exports = {
   createWeighSessions,
   closeWeighSessions,
   updateSessionPrices,
+  updateSessionCurrency,
 };

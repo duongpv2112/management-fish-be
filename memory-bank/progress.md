@@ -55,3 +55,7 @@
 ## Cập nhật 2026-09-26 — Chạy local không cần Atlas
 - `npm run dev:local`: chạy BE với MongoDB tạm trong bộ nhớ, có sẵn dữ liệu mẫu, mật khẩu đăng nhập `dev-local` (chỉ dùng cho DB tạm này). Tắt là mất dữ liệu.
 - Biến `MONGODB_URI` (tùy chọn): có thì dùng nguyên chuỗi đó (MongoDB trên máy/Docker/Atlas mới), không cần `USER_MONGODB`/`PWD_MONGODB`. Script migration cũng dùng biến này.
+
+## Cập nhật 2026-09-26 — Loại tiền theo phiên
+- Mỗi phiên có `currency` (VND hoặc USD, mặc định lấy theo phiên gần nhất). `PUT /api/weigh-sessions/updateSessionCurrency/:id` đổi loại tiền và xóa bảng giá cũ (không quy đổi tỷ giá).
+- Đơn giá và thành tiền làm tròn theo loại tiền: VND số nguyên, USD đến cent. Phiên cũ không có trường này được coi là VND, không cần migration.
