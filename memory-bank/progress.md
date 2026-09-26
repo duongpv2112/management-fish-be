@@ -46,3 +46,8 @@
 - Resource mới `weigh-session`: tạo/đóng phiên (luôn chỉ 1 phiên mở), bảng giá theo phiên × loại cá, tổng hợp tiền `getSessionSummary`.
 - Lần cân lưu `session`, `basketWeightSnapshot`, `netWeight`; số cân phải lớn hơn trọng lượng giỏ; phiên đã đóng không sửa/xóa lần cân.
 - Script `npm run migrate:sessions` gom dữ liệu cũ vào phiên "Dữ liệu cũ" — cần sao lưu DB rồi chạy trên production SAU khi deploy BE, TRƯỚC khi deploy FE.
+
+## Cập nhật 2026-09-26 — Nhật ký & đăng nhập (kế hoạch 06)
+- Nhật ký phân trang ở server (`page`, `pageSize` tối đa 100).
+- Đăng nhập bằng mật khẩu dùng chung (`POST /api/auth/login`, JWT 30 ngày); mọi API khác cần token; sai 5 lần/15 phút mỗi IP thì bị chặn; CORS chỉ cho GitHub Pages và localhost:3001.
+- Cần đặt `APP_PASSWORD_HASH` và `JWT_SECRET` trên Vercel và `.env` — thiếu thì server không khởi động.
