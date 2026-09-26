@@ -95,7 +95,27 @@ const updateSessionPrices = async (req, res) => {
   res.json(response);
 };
 
+const getSessionSummary = async (req, res) => {
+  let response = {
+    success: true,
+    data: null,
+    message: "",
+  };
+
+  let result = await weighSessionService.getSessionSummary(req.params.sessionId);
+  if (result.ok) {
+    response.data = result.data;
+    response.message = "Lấy tổng hợp phiên cân thành công!";
+  } else {
+    response.success = false;
+    response.message = result.message || "Lấy tổng hợp phiên cân không thành công!";
+  }
+
+  res.json(response);
+};
+
 module.exports = {
+  getSessionSummary,
   getWeighSessions,
   getOpenWeighSession,
   createWeighSessions,

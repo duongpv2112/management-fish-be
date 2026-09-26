@@ -3,15 +3,18 @@ const app = require("../app");
 const FishType = require("../app/models/fishType");
 const BasketType = require("../app/models/basketType");
 const FishWeight = require("../app/models/fishWeight");
+const WeighSession = require("../app/models/weighSession");
 
 beforeEach(async () => {
+  // getDataFish chỉ lấy lần cân của phiên đang mở
+  const session = await WeighSession.create({ sessionName: "Đang mở" });
   const tram = await FishType.create({ fishName: "Cá trắm" });
   const me = await FishType.create({ fishName: "Cá mè", isDelete: true });
   await BasketType.create({ basketName: "Giỏ to", basketWeight: 2 });
   await BasketType.create({ basketName: "Giỏ cũ", basketWeight: 1, isDelete: true });
-  await FishWeight.create({ fishType: tram._id, fishWeight: 25 });
-  await FishWeight.create({ fishType: tram._id, fishWeight: 10, isDelete: true });
-  await FishWeight.create({ fishType: me._id, fishWeight: 7 });
+  await FishWeight.create({ fishType: tram._id, fishWeight: 25, session: session._id });
+  await FishWeight.create({ fishType: tram._id, fishWeight: 10, isDelete: true, session: session._id });
+  await FishWeight.create({ fishType: me._id, fishWeight: 7, session: session._id });
 });
 
 test("getFishTypes bỏ loại cá đã xóa", async () => {

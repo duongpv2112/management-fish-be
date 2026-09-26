@@ -7,6 +7,8 @@ module.exports = (app) => {
 
   router.get("/getOpenWeighSession", weighSessionController.getOpenWeighSession);
 
+  router.get("/getSessionSummary/:sessionId", weighSessionController.getSessionSummary);
+
   router.post("/createWeighSessions", weighSessionController.createWeighSessions);
 
   router.put("/closeWeighSessions/:sessionId", weighSessionController.closeWeighSessions);

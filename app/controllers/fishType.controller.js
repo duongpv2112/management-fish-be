@@ -26,7 +26,7 @@ const getDataFish = async (req, res) => {
     message: "",
   };
 
-  let result = await fishTypeService.getDataFish();
+  let result = await fishTypeService.getDataFish(req.query.sessionId);
   if (result) {
     response.data = result;
     response.message = "Lấy danh sách dữ liệu cá thành công!";
