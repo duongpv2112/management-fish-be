@@ -3,10 +3,12 @@ const FishWeight = require("../models/fishWeight");
 const FishType = require("../models/fishType");
 const LogTracking = require("../models/logTracking");
 const logTrackingService = require("../services/logTracking.service");
+const { DEFAULT_CURRENCY, isValidCurrency, roundMoney } = require("../config/currency");
 
 const MESSAGE_NOT_FOUND = "Không tìm thấy phiên cân!";
 const MESSAGE_ALREADY_CLOSED = "Phiên cân đã kết thúc!";
 const MESSAGE_INVALID_PRICE = "Đơn giá không hợp lệ!";
+const MESSAGE_INVALID_CURRENCY = "Loại tiền không hợp lệ!";
 
 const writeLog = async (stepName, data) => {
   let logTracking = new LogTracking({
@@ -34,6 +36,12 @@ const defaultSessionName = (date = new Date()) => {
 const ensureIndexes = () => WeighSession.init();
 
 const findOpenSession = () => WeighSession.findOne({ status: "open", isDelete: false });
+
+// Phiên mới dùng lại loại tiền của phiên gần nhất để không phải chọn lại mỗi lần
+const latestCurrency = async () => {
+  const latest = await WeighSession.findOne({ isDelete: false }).sort({ createdAt: -1 });
+  return latest?.currency ?? DEFAULT_CURRENCY;
+};
 
 const getListWeighSession = async () => {
   try {
@@ -74,7 +82,10 @@ const getOrCreateOpenSession = async () => {
   if (open) return open;
 
   try {
-    const session = await WeighSession.create({ sessionName: defaultSessionName() });
+    const session = await WeighSession.create({
+      sessionName: defaultSessionName(),
+      currency: await latestCurrency(),
+    });
     await writeLog(`Tạo phiên: '${session.sessionName}' thành công`, session);
     return session;
   } catch (error) {
@@ -90,13 +101,20 @@ const getOrCreateOpenSession = async () => {
 const createWeighSession = async (sessionData) => {
   const sessionName = (sessionData?.sessionName ?? "").toString().trim() || defaultSessionName();
   const buyerName = (sessionData?.buyerName ?? "").toString().trim();
+  const requestedCurrency = sessionData?.currency;
+
+  if (requestedCurrency !== undefined && !isValidCurrency(requestedCurrency)) {
+    await writeLog(`Tạo phiên: '${sessionName}' không thành công`, { message: MESSAGE_INVALID_CURRENCY });
+    return { ok: false, message: MESSAGE_INVALID_CURRENCY };
+  }
 
   try {
     await ensureIndexes();
     const open = await findOpenSession();
     if (open) await closeSessionDocument(open);
 
-    const session = await WeighSession.create({ sessionName, buyerName });
+    const currency = requestedCurrency ?? (await latestCurrency());
+    const session = await WeighSession.create({ sessionName, buyerName, currency });
     await writeLog(`Tạo phiên: '${sessionName}' thành công`, session);
     return { ok: true, data: session };
   } catch (error) {
@@ -156,7 +174,11 @@ const updateSessionPrices = async (sessionId, pricesData) => {
       return { ok: false, message: MESSAGE_NOT_FOUND };
     }
 
-    session.prices = prices;
+    // Làm tròn theo loại tiền của phiên (VND số nguyên, USD đến cent)
+    session.prices = prices.map((price) => ({
+      ...price,
+      unitPrice: roundMoney(price.unitPrice, session.currency),
+    }));
     let result = await session.save();
     await writeLog(`Cập nhật giá phiên: '${session.sessionName}' thành công`, result);
     return { ok: true, data: result };
@@ -167,11 +189,42 @@ const updateSessionPrices = async (sessionId, pricesData) => {
   }
 };
 
+/**
+ * Đổi loại tiền của phiên. Đơn giá cũ tính theo loại tiền cũ nên bị xóa; đổi sang đúng loại đang dùng thì giữ nguyên.
+ * Phiên đã đóng vẫn đổi được (giống sửa giá).
+ * @returns {Promise<{ ok: true, data } | { ok: false, message? }>}
+ */
+const updateSessionCurrency = async (sessionId, currency) => {
+  try {
+    if (!isValidCurrency(currency)) {
+      await writeLog(`Đổi loại tiền phiên: '${sessionId}' không thành công`, { message: MESSAGE_INVALID_CURRENCY });
+      return { ok: false, message: MESSAGE_INVALID_CURRENCY };
+    }
+
+    const session = await WeighSession.findOne({ _id: sessionId, isDelete: false });
+    if (!session) {
+      await writeLog(`Đổi loại tiền phiên: '${sessionId}' không thành công`, { message: MESSAGE_NOT_FOUND });
+      return { ok: false, message: MESSAGE_NOT_FOUND };
+    }
+    if ((session.currency ?? DEFAULT_CURRENCY) === currency) return { ok: true, data: session };
+
+    session.currency = currency;
+    session.prices = [];
+    let result = await session.save();
+    await writeLog(`Đổi loại tiền phiên: '${session.sessionName}' sang ${currency} thành công`, result);
+    return { ok: true, data: result };
+  } catch (error) {
+    await writeLog(`Đổi loại tiền phiên: '${sessionId}' không thành công`, error);
+    console.log("Có lỗi xảy ra khi đổi loại tiền phiên", error);
+    return { ok: false };
+  }
+};
+
 const round2 = (value) => Math.round(value * 100) / 100;
 
 /**
  * Tổng hợp tiền của một phiên theo loại cá.
- * amount = Math.round(totalNet × unitPrice) với totalNet chưa làm tròn; loại cá chưa có giá thì amount null
+ * amount = totalNet × unitPrice làm tròn theo loại tiền (VND số nguyên, USD đến cent), totalNet chưa làm tròn; loại cá chưa có giá thì amount null
  * và không cộng vào totalAmount.
  * @returns {Promise<{ ok: true, data } | { ok: false, message? }>}
  */
@@ -186,6 +239,8 @@ const getSessionSummary = async (sessionId) => {
     const fishTypes = await FishType.find({ _id: { $in: fishTypeIds } });
     const fishNames = new Map(fishTypes.map((fishType) => [fishType._id, fishType.fishName]));
     const prices = new Map(session.prices.map((price) => [price.fishType, price.unitPrice]));
+    // Phiên tạo trước khi có trường currency là VND
+    const currency = session.currency ?? DEFAULT_CURRENCY;
 
     const lines = fishTypeIds
       .map((fishTypeId) => {
@@ -203,7 +258,7 @@ const getSessionSummary = async (sessionId) => {
           totalGross: round2(totalGross),
           totalNet: round2(totalNet),
           unitPrice,
-          amount: unitPrice === null ? null : Math.round(totalNet * unitPrice),
+          amount: unitPrice === null ? null : roundMoney(totalNet * unitPrice, currency),
         };
       })
       .sort((a, b) => a.fishName.localeCompare(b.fishName, "vi"));
@@ -218,10 +273,11 @@ const getSessionSummary = async (sessionId) => {
           status: session.status,
           createdAt: session.createdAt,
           closedAt: session.closedAt,
+          currency,
         },
         lines,
         totalNet: round2(lines.reduce((sum, line) => sum + line.totalNet, 0)),
-        totalAmount: lines.reduce((sum, line) => sum + (line.amount ?? 0), 0),
+        totalAmount: roundMoney(lines.reduce((sum, line) => sum + (line.amount ?? 0), 0), currency),
         missingPriceCount: lines.filter((line) => line.amount === null).length,
       },
     };
@@ -239,4 +295,5 @@ module.exports = {
   createWeighSession,
   closeWeighSession,
   updateSessionPrices,
+  updateSessionCurrency,
 };
