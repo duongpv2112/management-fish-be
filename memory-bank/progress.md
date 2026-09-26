@@ -36,3 +36,8 @@
 - API xóa bản ghi cân: `DELETE /api/fish-weights/deleteFishWeights/:fishWeightId` (xóa mềm, ghi LogTracking cả khi không tìm thấy id). Route `PUT /createFishWeights/:id` cũ đã gỡ.
 - `getFishTypes`, `getDataFish`, `getBasketTypes` bỏ bản ghi `isDelete: true` và sắp theo `createdAt`.
 - Vấn đề đã biết: cluster Atlas `cluster0.w4zp0gf` không còn phân giải DNS → production Vercel đang lỗi, cần tạo lại cluster/cập nhật chuỗi kết nối.
+
+## Cập nhật 2026-09-26 — CRUD danh mục & sửa bản ghi cân (kế hoạch 03)
+- Loại cá, loại giỏ: thêm/sửa/xóa mềm; tên duy nhất trong bản ghi chưa xóa (trim, không phân biệt hoa thường); thêm lại tên đã xóa thì khôi phục bản ghi cũ; trọng lượng giỏ phải >= 0.
+- Sửa bản ghi cân: `PUT /api/fish-weights/updateFishWeights/:fishWeightId`.
+- `getDataFish` trả thêm `fishWeightItems` (có `_id`) cho FE sửa/xóa từng lần cân.
