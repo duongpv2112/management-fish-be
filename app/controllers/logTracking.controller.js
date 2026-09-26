@@ -7,9 +7,11 @@ const getLogTrackings = async (req, res) => {
     data: [],
     message: "",
   };
-  let queryParams = req.query.fishType;
-
-  let result = await logTrackingService.getListLogTracking(queryParams);
+  let result = await logTrackingService.getListLogTracking({
+    fishType: req.query.fishType,
+    page: req.query.page,
+    pageSize: req.query.pageSize,
+  });
   if (result) {
     response.data = result;
     response.message = "Lấy danh sách log thành công!";

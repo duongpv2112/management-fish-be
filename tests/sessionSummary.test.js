@@ -1,5 +1,6 @@
 const request = require("supertest");
 const app = require("../app");
+const { authHeader } = require("./helpers/auth");
 const FishType = require("../app/models/fishType");
 const FishWeight = require("../app/models/fishWeight");
 const WeighSession = require("../app/models/weighSession");
@@ -39,7 +40,7 @@ beforeEach(async () => {
 
 describe("getSessionSummary", () => {
   test("tổng hợp theo loại cá, thiếu giá thì amount null", async () => {
-    const res = await request(app).get(`/api/weigh-sessions/getSessionSummary/${session._id}`);
+    const res = await request(app).get(`/api/weigh-sessions/getSessionSummary/${session._id}`).set(authHeader());
     expect(res.body.success).toBe(true);
     const { session: info, lines, totalNet, totalAmount, missingPriceCount } = res.body.data;
 
@@ -63,7 +64,7 @@ describe("getSessionSummary", () => {
   });
 
   test("phiên không tồn tại", async () => {
-    const res = await request(app).get("/api/weigh-sessions/getSessionSummary/khong-co");
+    const res = await request(app).get("/api/weigh-sessions/getSessionSummary/khong-co").set(authHeader());
     expect(res.body.success).toBe(false);
     expect(res.body.message).toBe("Không tìm thấy phiên cân!");
   });
@@ -71,7 +72,7 @@ describe("getSessionSummary", () => {
 
 describe("getDataFish theo phiên", () => {
   test("sessionId → chỉ lần cân của phiên đó, fishWeightItems có netWeight", async () => {
-    const res = await request(app).get(`/api/fish-types/getDataFish?sessionId=${otherSession._id}`);
+    const res = await request(app).get(`/api/fish-types/getDataFish?sessionId=${otherSession._id}`).set(authHeader());
     const byName = Object.fromEntries(res.body.data.map((row) => [row.fishName, row]));
     expect(byName["Cá chép"].fishWeights).toEqual([9]);
     expect(byName["Cá chép"].fishWeightItems[0].netWeight).toBe(7);
@@ -79,7 +80,7 @@ describe("getDataFish theo phiên", () => {
   });
 
   test("không truyền sessionId → phiên đang mở", async () => {
-    const res = await request(app).get("/api/fish-types/getDataFish");
+    const res = await request(app).get("/api/fish-types/getDataFish").set(authHeader());
     const byName = Object.fromEntries(res.body.data.map((row) => [row.fishName, row]));
     expect(byName["Cá trắm"].fishWeights).toEqual([25.5, 32.25]);
     expect(byName["Cá chép"].fishWeights).toEqual([]);
@@ -87,7 +88,7 @@ describe("getDataFish theo phiên", () => {
 
   test("không có phiên mở → danh sách cân rỗng nhưng vẫn có loại cá", async () => {
     await WeighSession.updateOne({ _id: session._id }, { status: "closed" });
-    const res = await request(app).get("/api/fish-types/getDataFish");
+    const res = await request(app).get("/api/fish-types/getDataFish").set(authHeader());
     expect(res.body.data).toHaveLength(3);
     expect(res.body.data.every((row) => row.fishWeights.length === 0)).toBe(true);
   });

@@ -1,7 +1,17 @@
 require("dotenv").config();
 const mongoose = require("mongoose");
+const { assertRequiredEnv } = require("./app/config/env");
+const { buildDbURI, requiredEnvNames } = require("./app/config/database");
+
+// Thiếu biến môi trường bắt buộc thì không khởi động, tránh chạy mà không có bảo vệ
+try {
+  assertRequiredEnv(requiredEnvNames());
+} catch (error) {
+  console.error(error.message);
+  process.exit(1);
+}
+
 const app = require("./app");
-const { buildDbURI } = require("./app/config/database");
 
 // set port, listen for requests
 const PORT = process.env.NODE_PORT;
