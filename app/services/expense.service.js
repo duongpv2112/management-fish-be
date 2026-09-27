@@ -48,7 +48,7 @@ const optionalNumber = (value, isValid) => {
  * Kiểm tra và chuẩn hóa dữ liệu khoản chi. Có cả số lượng và đơn giá thì số tiền = số lượng × đơn giá.
  * @returns {Promise<{ data } | { message }>}
  */
-const readExpense = async (expenseData) => {
+const readExpense = async (expenseData, currentCategoryId = null) => {
   const quantity = optionalNumber(expenseData?.quantity, (n) => n > 0);
   if (quantity === INVALID) return { message: MESSAGE_INVALID_QUANTITY };
   const unitPrice = optionalNumber(expenseData?.unitPrice, (n) => n >= 0);
@@ -65,7 +65,11 @@ const readExpense = async (expenseData) => {
   const date = toDateOnly(expenseData?.date);
   if (!date) return { message: MESSAGE_INVALID_DATE };
 
-  const category = await ExpenseCategory.findOne({ _id: expenseData?.categoryId, isDelete: false });
+  // Khi sửa, giữ nguyên nhóm cũ vẫn được dù nhóm đó đã bị xóa mềm; chọn nhóm khác thì nhóm phải còn dùng
+  const keepsCategory = currentCategoryId !== null && expenseData?.categoryId === currentCategoryId;
+  const category = await ExpenseCategory.findOne(
+    keepsCategory ? { _id: currentCategoryId } : { _id: expenseData?.categoryId, isDelete: false }
+  );
   if (!category) return { message: MESSAGE_NOT_FOUND };
 
   const cropId = expenseData?.cropId || null;
@@ -166,7 +170,7 @@ const updateExpense = async (expenseId, expenseData) => {
     const expense = await Expense.findOne({ _id: expenseId, isDelete: false });
     if (!expense) return await fail(step, MESSAGE_NOT_FOUND);
 
-    const { data, message, categoryName } = await readExpense(expenseData);
+    const { data, message, categoryName } = await readExpense(expenseData, expense.category);
     if (message) return await fail(step, message);
 
     Object.assign(expense, data);

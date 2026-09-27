@@ -146,3 +146,14 @@ test("gợi ý mô tả: khác nhau, mới nhất trước, kèm đơn vị củ
   expect(res.body.data.map((s) => s.description)).toEqual(["Cám A", "Cám B"]);
   expect(res.body.data[0]).toMatchObject({ unit: "bao", kgPerUnit: 25, unitPrice: 350000 });
 });
+
+test("sửa khoản chi có nhóm chi đã xóa: giữ nhóm cũ được, đổi sang nhóm đã xóa khác thì không", async () => {
+  const created = (await create({ categoryId: dien._id, amount: 100000 })).body.data;
+  await ExpenseCategory.updateOne({ _id: dien._id }, { isDelete: true });
+  const res = await update(created._id, { categoryId: dien._id, amount: 150000 });
+  expect(res.body.success).toBe(true);
+  expect((await Expense.findById(created._id)).amount).toBe(150000);
+
+  const other = (await create({ categoryId: cam._id, amount: 1 })).body.data;
+  expect((await update(other._id, { categoryId: dien._id, amount: 1 })).body.message).toBe("Không tìm thấy dữ liệu!");
+});
