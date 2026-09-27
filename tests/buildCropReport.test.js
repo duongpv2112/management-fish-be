@@ -1,4 +1,4 @@
-const { buildCropReport } = require("../app/services/cropReport.service");
+const { buildCropReport, summarizeExpenses } = require("../app/services/cropReport.service");
 
 const pond = { _id: "p1", pondName: "Ao 1" };
 const openCrop = {
@@ -175,4 +175,12 @@ test("số ngày: vụ đã kết thúc tính tới ngày kết thúc, vụ đan
   expect(buildCropReport({ crop: closed, sessions: [], expenses: [], today: new Date("2026-12-01") }).crop.days).toBe(26);
   const report = buildCropReport({ crop: openCrop, sessions: [], expenses: [], today });
   expect(report.crop).toMatchObject({ _id: "c1", cropName: "Ao 1 · Vụ 09/2026", pond: { _id: "p1", pondName: "Ao 1" }, status: "open", days: 26 });
+});
+
+test("summarizeExpenses: rỗng → 0; cùng kết quả phần chi của buildCropReport", () => {
+  expect(summarizeExpenses([])).toEqual({ total: 0, byCategory: [] });
+  const expenses = [expense(cam, 2000000), expense(giong, 4000000), expense(dien, 500000), expense(cam, 1500000)];
+  const report = buildCropReport({ crop: openCrop, sessions: [], expenses, today });
+  expect(summarizeExpenses(expenses)).toEqual(report.expense);
+  expect(summarizeExpenses(expenses).total).toBe(8000000);
 });

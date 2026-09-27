@@ -33,5 +33,6 @@ require("./app/routes/pond.routes")(app);
 require("./app/routes/crop.routes")(app);
 require("./app/routes/expenseCategory.routes")(app);
 require("./app/routes/expense.routes")(app);
+require("./app/routes/report.routes")(app);
 
 module.exports = app;

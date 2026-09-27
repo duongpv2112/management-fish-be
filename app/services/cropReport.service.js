@@ -46,6 +46,32 @@ const categoryInfo = (category) => ({
 });
 
 /**
+ * Tổng chi và chi theo nhóm (sắp giảm dần, phần trăm 1 chữ số) — dùng cho báo cáo vụ và chi phí chung.
+ * @param {object[]} expenses khoản chi đã populate category
+ * @returns {{ total: number, byCategory: { category, amount, percent, count }[] }}
+ */
+const summarizeExpenses = (expenses) => {
+  const byCategoryMap = new Map();
+  for (const expense of expenses) {
+    const info = categoryInfo(expense.category);
+    const entry = byCategoryMap.get(info._id) ?? { category: info, amount: 0, count: 0 };
+    entry.amount += expense.amount;
+    entry.count += 1;
+    byCategoryMap.set(info._id, entry);
+  }
+  const total = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+  const byCategory = [...byCategoryMap.values()]
+    .sort((a, b) => b.amount - a.amount)
+    .map(({ category, amount, count }) => ({
+      category,
+      amount,
+      percent: round1((amount / total) * 100),
+      count,
+    }));
+  return { total, byCategory };
+};
+
+/**
  * Báo cáo thu – chi – lãi của một vụ từ dữ liệu đã tải (hàm thuần, không truy cập DB).
  * @param {{ crop, sessions: object[], expenses: object[], today?: Date }} input
  *   sessions: kết quả summarizeSession; expenses: khoản chi đã populate category
@@ -55,23 +81,7 @@ const buildCropReport = ({ crop, sessions, expenses, today = new Date() }) => {
   const revenueTotal = vndSessions.reduce((sum, summary) => sum + summary.totalAmount, 0);
   const totalNetKg = round2(vndSessions.reduce((sum, summary) => sum + summary.totalNet, 0));
 
-  const byCategoryMap = new Map();
-  for (const expense of expenses) {
-    const info = categoryInfo(expense.category);
-    const entry = byCategoryMap.get(info._id) ?? { category: info, amount: 0, count: 0 };
-    entry.amount += expense.amount;
-    entry.count += 1;
-    byCategoryMap.set(info._id, entry);
-  }
-  const expenseTotal = expenses.reduce((sum, expense) => sum + expense.amount, 0);
-  const byCategory = [...byCategoryMap.values()]
-    .sort((a, b) => b.amount - a.amount)
-    .map(({ category, amount, count }) => ({
-      category,
-      amount,
-      percent: round1((amount / expenseTotal) * 100),
-      count,
-    }));
+  const { total: expenseTotal, byCategory } = summarizeExpenses(expenses);
 
   const withMetric = (metric) => expenses.filter((expense) => categoryInfo(expense.category).metric === metric);
   const feedKg = feedKgOf(withMetric("feed"));
@@ -117,23 +127,29 @@ const buildCropReport = ({ crop, sessions, expenses, today = new Date() }) => {
 };
 
 /**
+ * Tải phiên bán và khoản chi của một vụ rồi lập báo cáo.
+ * @param {object} crop vụ đã populate pond
+ */
+const loadCropReport = async (crop) => {
+  const sessionDocs = await WeighSession.find({ crop: crop._id, isDelete: false }).sort({ createdAt: 1 });
+  const sessions = await Promise.all(sessionDocs.map((session) => weighSessionService.summarizeSession(session)));
+  // Lấy cả nhóm chi đã xóa mềm để khoản chi cũ vẫn có tên nhóm
+  const expenses = await Expense.find({ crop: crop._id, isDelete: false }).populate("category");
+  return buildCropReport({ crop, sessions, expenses });
+};
+
+/**
  * @returns {Promise<{ ok: true, data } | { ok: false, message? }>}
  */
 const getCropReport = async (cropId) => {
   try {
     const crop = await Crop.findOne({ _id: cropId, isDelete: false }).populate("pond");
     if (!crop) return { ok: false, message: MESSAGE_NOT_FOUND };
-
-    const sessionDocs = await WeighSession.find({ crop: crop._id, isDelete: false }).sort({ createdAt: 1 });
-    const sessions = await Promise.all(sessionDocs.map((session) => weighSessionService.summarizeSession(session)));
-    // Lấy cả nhóm chi đã xóa mềm để khoản chi cũ vẫn có tên nhóm
-    const expenses = await Expense.find({ crop: crop._id, isDelete: false }).populate("category");
-
-    return { ok: true, data: buildCropReport({ crop, sessions, expenses }) };
+    return { ok: true, data: await loadCropReport(crop) };
   } catch (error) {
     console.log("Có lỗi xảy ra khi lập báo cáo vụ nuôi", error);
     return { ok: false };
   }
 };
 
-module.exports = { buildCropReport, getCropReport };
+module.exports = { buildCropReport, summarizeExpenses, loadCropReport, getCropReport };
