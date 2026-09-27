@@ -200,7 +200,7 @@ FE (`/bao-cao`, `ReportView`): chọn năm (`CPSelect`) hoặc "Tùy chọn" t�
 | Trùng tên nhóm chi | "Tên nhóm chi đã tồn tại!" |
 | Tạo vụ khi ao đang có vụ mở | "Ao này đang có vụ nuôi!" |
 | Kết thúc vụ còn phiên mở | "Vụ còn phiên bán đang mở, hãy kết thúc phiên trước!" |
-| Ngày kết thúc trước ngày bắt đầu | "Ngày kết thúc phải sau ngày bắt đầu!" |
+| Ngày kết thúc trước ngày bắt đầu (cùng ngày vẫn hợp lệ) | "Ngày kết thúc không được trước ngày bắt đầu!" |
 | Xóa vụ có dữ liệu | "Vụ đã có dữ liệu, không xóa được!" |
 | Xóa ao có vụ mở | "Ao đang có vụ nuôi, hãy kết thúc vụ trước!" |
 | Tạo phiên với vụ đã kết thúc | "Vụ đã kết thúc, hãy chọn vụ đang nuôi!" |

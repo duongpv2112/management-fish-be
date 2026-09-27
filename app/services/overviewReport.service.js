@@ -4,7 +4,7 @@ const { loadCropReport, summarizeExpenses } = require("./cropReport.service");
 const { toDateOnly } = require("../common/dateOnly");
 
 const MESSAGE_INVALID_DATE = "Ngày không hợp lệ!";
-const MESSAGE_INVALID_RANGE = "Ngày kết thúc phải sau ngày bắt đầu!";
+const MESSAGE_INVALID_RANGE = "Ngày kết thúc không được trước ngày bắt đầu!";
 
 // "YYYY-MM-DD" → Date (00:00 UTC); bỏ trống → fallback; sai → null
 const readDate = (value, fallback) =>

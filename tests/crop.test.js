@@ -87,7 +87,7 @@ test("kết thúc không truyền ngày → hôm nay", async () => {
 test("kết thúc trước ngày thả", async () => {
   const crop = (await createCrop({ pondId: ao1._id, startDate: "2026-09-27" })).body.data;
   expect((await closeCrop(crop._id, { endDate: "2026-09-26" })).body.message).toBe(
-    "Ngày kết thúc phải sau ngày bắt đầu!"
+    "Ngày kết thúc không được trước ngày bắt đầu!"
   );
 });
 
@@ -158,7 +158,7 @@ test("sửa ngày thả sau ngày kết thúc", async () => {
   const crop = (await createCrop({ pondId: ao1._id, startDate: "2026-01-01" })).body.data;
   await closeCrop(crop._id, { endDate: "2026-06-01" });
   expect((await updateCrop(crop._id, { cropName: "X", startDate: "2026-06-02" })).body.message).toBe(
-    "Ngày kết thúc phải sau ngày bắt đầu!"
+    "Ngày kết thúc không được trước ngày bắt đầu!"
   );
 });
 

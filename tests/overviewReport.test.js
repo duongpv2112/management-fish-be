@@ -148,7 +148,7 @@ test("ngày sai", async () => {
   expect((await getOverview({ from: "2026-01-01", to: "2026-02-30" })).body.message).toBe("Ngày không hợp lệ!");
   expect((await getOverview({ from: "2026-12-31", to: "2026-01-01" })).body).toMatchObject({
     success: false,
-    message: "Ngày kết thúc phải sau ngày bắt đầu!",
+    message: "Ngày kết thúc không được trước ngày bắt đầu!",
   });
   // Cùng một ngày là hợp lệ
   expect((await getOverview({ from: "2026-06-01", to: "2026-06-01" })).body.success).toBe(true);
