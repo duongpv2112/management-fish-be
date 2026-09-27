@@ -1,6 +1,7 @@
 const WeighSession = require("../models/weighSession");
 const FishWeight = require("../models/fishWeight");
 const FishType = require("../models/fishType");
+const Crop = require("../models/crop");
 const LogTracking = require("../models/logTracking");
 const logTrackingService = require("../services/logTracking.service");
 const { DEFAULT_CURRENCY, isValidCurrency, roundMoney } = require("../config/currency");
@@ -9,6 +10,11 @@ const MESSAGE_NOT_FOUND = "Không tìm thấy phiên cân!";
 const MESSAGE_ALREADY_CLOSED = "Phiên cân đã kết thúc!";
 const MESSAGE_INVALID_PRICE = "Đơn giá không hợp lệ!";
 const MESSAGE_INVALID_CURRENCY = "Loại tiền không hợp lệ!";
+const MESSAGE_DATA_NOT_FOUND = "Không tìm thấy dữ liệu!";
+const MESSAGE_CROP_CLOSED = "Vụ đã kết thúc, hãy chọn vụ đang nuôi!";
+
+// Kèm vụ và ao của phiên để FE hiện tên ao (lấy cả ao đã xóa mềm)
+const CROP_POPULATE = { path: "crop", populate: { path: "pond" } };
 
 const writeLog = async (stepName, data) => {
   let logTracking = new LogTracking({
@@ -37,6 +43,8 @@ const ensureIndexes = () => WeighSession.init();
 
 const findOpenSession = () => WeighSession.findOne({ status: "open", isDelete: false });
 
+const findActiveCrop = (cropId) => Crop.findOne({ _id: cropId, isDelete: false });
+
 // Phiên mới dùng lại loại tiền của phiên gần nhất để không phải chọn lại mỗi lần
 const latestCurrency = async () => {
   const latest = await WeighSession.findOne({ isDelete: false }).sort({ createdAt: -1 });
@@ -45,7 +53,7 @@ const latestCurrency = async () => {
 
 const getListWeighSession = async () => {
   try {
-    return await WeighSession.find({ isDelete: false }).sort({ createdAt: -1 });
+    return await WeighSession.find({ isDelete: false }).sort({ createdAt: -1 }).populate(CROP_POPULATE);
   } catch (error) {
     await writeLog("Có lỗi xảy ra khi lấy danh sách phiên cân!", error);
     console.log("Có lỗi xảy ra khi lấy danh sách phiên cân", error);
@@ -57,7 +65,7 @@ const getListWeighSession = async () => {
  */
 const getOpenWeighSession = async () => {
   try {
-    return { ok: true, data: await findOpenSession() };
+    return { ok: true, data: await findOpenSession().populate(CROP_POPULATE) };
   } catch (error) {
     console.log("Có lỗi xảy ra khi lấy phiên cân đang mở", error);
     return { ok: false };
@@ -102,6 +110,7 @@ const createWeighSession = async (sessionData) => {
   const sessionName = (sessionData?.sessionName ?? "").toString().trim() || defaultSessionName();
   const buyerName = (sessionData?.buyerName ?? "").toString().trim();
   const requestedCurrency = sessionData?.currency;
+  const cropId = sessionData?.cropId || null;
 
   if (requestedCurrency !== undefined && !isValidCurrency(requestedCurrency)) {
     await writeLog(`Tạo phiên: '${sessionName}' không thành công`, { message: MESSAGE_INVALID_CURRENCY });
@@ -109,12 +118,22 @@ const createWeighSession = async (sessionData) => {
   }
 
   try {
+    // Kiểm tra vụ trước khi đóng phiên đang mở, để lỗi không làm mất phiên hiện tại
+    if (cropId) {
+      const crop = await findActiveCrop(cropId);
+      const message = !crop ? MESSAGE_DATA_NOT_FOUND : crop.status !== "open" ? MESSAGE_CROP_CLOSED : null;
+      if (message) {
+        await writeLog(`Tạo phiên: '${sessionName}' không thành công`, { message });
+        return { ok: false, message };
+      }
+    }
+
     await ensureIndexes();
     const open = await findOpenSession();
     if (open) await closeSessionDocument(open);
 
     const currency = requestedCurrency ?? (await latestCurrency());
-    const session = await WeighSession.create({ sessionName, buyerName, currency });
+    const session = await WeighSession.create({ sessionName, buyerName, currency, crop: cropId });
     await writeLog(`Tạo phiên: '${sessionName}' thành công`, session);
     return { ok: true, data: session };
   } catch (error) {
@@ -220,7 +239,32 @@ const updateSessionCurrency = async (sessionId, currency) => {
   }
 };
 
-const round2 = (value) => Math.round(value * 100) / 100;
+/**
+ * Gán / đổi / bỏ gán vụ (ao) cho phiên. Phiên và vụ đã kết thúc vẫn gán được (dữ liệu cũ).
+ * @param {string|null} cropId null hoặc "" = bỏ gán
+ * @returns {Promise<{ ok: true, data } | { ok: false, message? }>}
+ */
+const updateSessionCrop = async (sessionId, cropId) => {
+  try {
+    const session = await WeighSession.findOne({ _id: sessionId, isDelete: false });
+    const crop = cropId ? await findActiveCrop(cropId) : null;
+    if (!session || (cropId && !crop)) {
+      await writeLog(`Gán ao cho phiên: '${sessionId}' không thành công`, { message: MESSAGE_DATA_NOT_FOUND });
+      return { ok: false, message: MESSAGE_DATA_NOT_FOUND };
+    }
+
+    session.crop = crop?._id ?? null;
+    let result = await session.save();
+    await writeLog(`Gán ao cho phiên: '${session.sessionName}' → '${crop?.cropName ?? "chưa chọn"}' thành công`, result);
+    return { ok: true, data: result };
+  } catch (error) {
+    await writeLog(`Gán ao cho phiên: '${sessionId}' không thành công`, error);
+    console.log("Có lỗi xảy ra khi gán ao cho phiên", error);
+    return { ok: false };
+  }
+};
+
+const round2 =(value) => Math.round(value * 100) / 100;
 
 /**
  * Tổng hợp tiền của một phiên theo loại cá.
@@ -296,4 +340,5 @@ module.exports = {
   closeWeighSession,
   updateSessionPrices,
   updateSessionCurrency,
+  updateSessionCrop,
 };

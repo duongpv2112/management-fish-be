@@ -25,6 +25,17 @@ const seedDemoData = async () => {
     const result = await fishWeightService.createFishWeight({ fishType, basketType: bigBasket._id, fishWeight });
     if (!result.ok) throw new Error(`Không tạo được dữ liệu mẫu: ${result.message}`);
   }
+
+  // Ao 1 đang có vụ (phiên demo thuộc vụ này), Ao 2 chưa có vụ
+  const pondService = require("../app/services/pond.service");
+  const cropService = require("../app/services/crop.service");
+  const weighSessionService = require("../app/services/weighSession.service");
+  const ao1 = await pondService.createPond({ pondName: "Ao 1", area: 1000 });
+  await new Promise((resolve) => setTimeout(resolve, 5));
+  await pondService.createPond({ pondName: "Ao 2" });
+  const crop = await cropService.createCrop({ pondId: ao1.data._id });
+  const session = await weighSessionService.getOrCreateOpenSession();
+  await weighSessionService.updateSessionCrop(session._id, crop.data._id);
 };
 
 const main = async () => {

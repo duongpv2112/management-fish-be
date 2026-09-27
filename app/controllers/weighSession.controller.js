@@ -114,6 +114,25 @@ const updateSessionCurrency = async (req, res) => {
   res.json(response);
 };
 
+const updateSessionCrop = async (req, res) => {
+  let response = {
+    success: true,
+    data: [],
+    message: "",
+  };
+
+  let result = await weighSessionService.updateSessionCrop(req.params.sessionId, req.body?.cropId);
+  if (result.ok) {
+    response.data = result.data;
+    response.message = "Cập nhật ao cho phiên thành công!";
+  } else {
+    response.success = false;
+    response.message = result.message || "Cập nhật ao cho phiên không thành công!";
+  }
+
+  res.json(response);
+};
+
 const getSessionSummary = async (req, res) => {
   let response = {
     success: true,
@@ -141,4 +160,5 @@ module.exports = {
   closeWeighSessions,
   updateSessionPrices,
   updateSessionCurrency,
+  updateSessionCrop,
 };
