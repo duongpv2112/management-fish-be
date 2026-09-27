@@ -5,6 +5,8 @@ module.exports = (app) => {
 
   router.get("/getCrops", cropController.getCrops);
 
+  router.get("/getCropReport/:cropId", cropController.getCropReport);
+
   router.post("/createCrops", cropController.createCrops);
 
   router.put("/updateCrops/:cropId", cropController.updateCrops);

@@ -267,64 +267,67 @@ const updateSessionCrop = async (sessionId, cropId) => {
 const round2 = (value) => Math.round(value * 100) / 100;
 
 /**
- * Tổng hợp tiền của một phiên theo loại cá.
+ * Tổng hợp tiền của một phiên (document) theo loại cá. Dùng chung cho phiếu tính tiền và báo cáo vụ.
  * amount = totalNet × unitPrice làm tròn theo loại tiền (VND số nguyên, USD đến cent), totalNet chưa làm tròn; loại cá chưa có giá thì amount null
  * và không cộng vào totalAmount.
+ * @returns {Promise<{ session, lines, totalNet, totalAmount, missingPriceCount }>}
+ */
+const summarizeSession = async (session) => {
+  const fishWeights = await FishWeight.find({ session: session._id, isDelete: false });
+  const fishTypeIds = [...new Set(fishWeights.map((weight) => weight.fishType))];
+  // Lấy cả loại cá đã xóa mềm: lần cân trong phiên vẫn phải được tính tiền
+  const fishTypes = await FishType.find({ _id: { $in: fishTypeIds } });
+  const fishNames = new Map(fishTypes.map((fishType) => [fishType._id, fishType.fishName]));
+  const prices = new Map(session.prices.map((price) => [price.fishType, price.unitPrice]));
+  // Phiên tạo trước khi có trường currency là VND
+  const currency = session.currency ?? DEFAULT_CURRENCY;
+
+  const lines = fishTypeIds
+    .map((fishTypeId) => {
+      const weights = fishWeights.filter((weight) => weight.fishType === fishTypeId);
+      const totalGross = weights.reduce((sum, weight) => sum + weight.fishWeight, 0);
+      const totalNet = weights.reduce(
+        (sum, weight) => sum + (weight.netWeight ?? weight.fishWeight),
+        0
+      );
+      const unitPrice = prices.has(fishTypeId) ? prices.get(fishTypeId) : null;
+      return {
+        fishTypeId,
+        fishName: fishNames.get(fishTypeId) ?? "",
+        count: weights.length,
+        totalGross: round2(totalGross),
+        totalNet: round2(totalNet),
+        unitPrice,
+        amount: unitPrice === null ? null : roundMoney(totalNet * unitPrice, currency),
+      };
+    })
+    .sort((a, b) => a.fishName.localeCompare(b.fishName, "vi"));
+
+  return {
+    session: {
+      _id: session._id,
+      sessionName: session.sessionName,
+      buyerName: session.buyerName,
+      status: session.status,
+      createdAt: session.createdAt,
+      closedAt: session.closedAt,
+      currency,
+    },
+    lines,
+    totalNet: round2(lines.reduce((sum, line) => sum + line.totalNet, 0)),
+    totalAmount: roundMoney(lines.reduce((sum, line) => sum + (line.amount ?? 0), 0), currency),
+    missingPriceCount: lines.filter((line) => line.amount === null).length,
+  };
+};
+
+/**
  * @returns {Promise<{ ok: true, data } | { ok: false, message? }>}
  */
 const getSessionSummary = async (sessionId) => {
   try {
     const session = await WeighSession.findOne({ _id: sessionId, isDelete: false });
     if (!session) return { ok: false, message: MESSAGE_NOT_FOUND };
-
-    const fishWeights = await FishWeight.find({ session: session._id, isDelete: false });
-    const fishTypeIds = [...new Set(fishWeights.map((weight) => weight.fishType))];
-    // Lấy cả loại cá đã xóa mềm: lần cân trong phiên vẫn phải được tính tiền
-    const fishTypes = await FishType.find({ _id: { $in: fishTypeIds } });
-    const fishNames = new Map(fishTypes.map((fishType) => [fishType._id, fishType.fishName]));
-    const prices = new Map(session.prices.map((price) => [price.fishType, price.unitPrice]));
-    // Phiên tạo trước khi có trường currency là VND
-    const currency = session.currency ?? DEFAULT_CURRENCY;
-
-    const lines = fishTypeIds
-      .map((fishTypeId) => {
-        const weights = fishWeights.filter((weight) => weight.fishType === fishTypeId);
-        const totalGross = weights.reduce((sum, weight) => sum + weight.fishWeight, 0);
-        const totalNet = weights.reduce(
-          (sum, weight) => sum + (weight.netWeight ?? weight.fishWeight),
-          0
-        );
-        const unitPrice = prices.has(fishTypeId) ? prices.get(fishTypeId) : null;
-        return {
-          fishTypeId,
-          fishName: fishNames.get(fishTypeId) ?? "",
-          count: weights.length,
-          totalGross: round2(totalGross),
-          totalNet: round2(totalNet),
-          unitPrice,
-          amount: unitPrice === null ? null : roundMoney(totalNet * unitPrice, currency),
-        };
-      })
-      .sort((a, b) => a.fishName.localeCompare(b.fishName, "vi"));
-
-    return {
-      ok: true,
-      data: {
-        session: {
-          _id: session._id,
-          sessionName: session.sessionName,
-          buyerName: session.buyerName,
-          status: session.status,
-          createdAt: session.createdAt,
-          closedAt: session.closedAt,
-          currency,
-        },
-        lines,
-        totalNet: round2(lines.reduce((sum, line) => sum + line.totalNet, 0)),
-        totalAmount: roundMoney(lines.reduce((sum, line) => sum + (line.amount ?? 0), 0), currency),
-        missingPriceCount: lines.filter((line) => line.amount === null).length,
-      },
-    };
+    return { ok: true, data: await summarizeSession(session) };
   } catch (error) {
     console.log("Có lỗi xảy ra khi tổng hợp phiên cân", error);
     return { ok: false };
@@ -332,6 +335,7 @@ const getSessionSummary = async (sessionId) => {
 };
 
 module.exports = {
+  summarizeSession,
   getSessionSummary,
   getListWeighSession,
   getOpenWeighSession,

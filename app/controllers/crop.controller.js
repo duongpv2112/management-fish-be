@@ -1,4 +1,5 @@
 const cropService = require("../services/crop.service");
+const cropReportService = require("../services/cropReport.service");
 const { sendResult } = require("../common/sendResult");
 
 const getCrops = async (req, res) => {
@@ -56,7 +57,17 @@ const deleteCrops = async (req, res) => {
   );
 };
 
+const getCropReport = async (req, res) => {
+  sendResult(
+    res,
+    await cropReportService.getCropReport(req.params.cropId),
+    "Lấy báo cáo vụ nuôi thành công!",
+    "Lấy báo cáo vụ nuôi không thành công!"
+  );
+};
+
 module.exports = {
+  getCropReport,
   getCrops,
   createCrops,
   updateCrops,
