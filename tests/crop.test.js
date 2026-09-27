@@ -196,3 +196,12 @@ test("danh sách: vụ mở trước, rồi ngày thả mới nhất; lọc theo
   expect((await getCrops({ pondId: ao1._id })).body.data).toHaveLength(2);
   expect((await getCrops({ status: "open" })).body.data.map((c) => c.cropName)).toEqual(["Mở ao 2"]);
 });
+
+test("xóa vụ có khoản chi → Vụ đã có dữ liệu, không xóa được!", async () => {
+  const Expense = require("../app/models/expense");
+  const ExpenseCategory = require("../app/models/expenseCategory");
+  const category = await ExpenseCategory.create({ categoryName: "Cám" });
+  const crop = (await createCrop({ pondId: ao1._id })).body.data;
+  await Expense.create({ date: new Date(), category: category._id, crop: crop._id, amount: 1000 });
+  expect((await deleteCrop(crop._id)).body.message).toBe("Vụ đã có dữ liệu, không xóa được!");
+});

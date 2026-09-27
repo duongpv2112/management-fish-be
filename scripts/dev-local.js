@@ -39,6 +39,20 @@ const seedDemoData = async () => {
 
   const { seedExpenseCategories } = require("./seed-expense-categories");
   await seedExpenseCategories({ dryRun: false });
+
+  // Vài khoản chi mẫu: giống + cám cho vụ Ao 1, tiền điện chung
+  const ExpenseCategory = require("../app/models/expenseCategory");
+  const expenseService = require("../app/services/expense.service");
+  const categoryId = async (name) => (await ExpenseCategory.findOne({ categoryName: name }))._id;
+  const samples = [
+    { categoryId: await categoryId("Giống"), cropId: crop.data._id, description: "Cá trắm giống", quantity: 5000, unit: "con", unitPrice: 800 },
+    { categoryId: await categoryId("Cám"), cropId: crop.data._id, description: "Cám viên", quantity: 10, unit: "bao", unitPrice: 350000, kgPerUnit: 25 },
+    { categoryId: await categoryId("Điện"), cropId: null, description: "Tiền điện tháng 9", amount: 600000 },
+  ];
+  for (const sample of samples) {
+    const result = await expenseService.createExpense(sample);
+    if (!result.ok) throw new Error(`Không tạo được khoản chi mẫu: ${result.message}`);
+  }
 };
 
 const main = async () => {

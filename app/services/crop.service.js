@@ -1,6 +1,7 @@
 const Crop = require("../models/crop");
 const Pond = require("../models/pond");
 const WeighSession = require("../models/weighSession");
+const Expense = require("../models/expense");
 const LogTracking = require("../models/logTracking");
 const logTrackingService = require("../services/logTracking.service");
 const { toDateOnly, formatMonthYear } = require("../common/dateOnly");
@@ -183,7 +184,7 @@ const reopenCrop = async (cropId) => {
 };
 
 /**
- * Xóa mềm vụ chưa có dữ liệu (chưa có phiên bán)
+ * Xóa mềm vụ chưa có dữ liệu (chưa có phiên bán, chưa có khoản chi)
  * @returns {Promise<{ ok: true, data } | { ok: false, message? }>}
  */
 const deleteCrop = async (cropId) => {
@@ -192,7 +193,10 @@ const deleteCrop = async (cropId) => {
   try {
     const crop = await findActiveCrop(cropId);
     if (!crop) return await fail(step, MESSAGE_NOT_FOUND);
-    if (await WeighSession.exists({ crop: crop._id, isDelete: false })) return await fail(step, MESSAGE_HAS_DATA);
+    const hasData =
+      (await WeighSession.exists({ crop: crop._id, isDelete: false })) ||
+      (await Expense.exists({ crop: crop._id, isDelete: false }));
+    if (hasData) return await fail(step, MESSAGE_HAS_DATA);
 
     crop.isDelete = true;
     let result = await crop.save();
