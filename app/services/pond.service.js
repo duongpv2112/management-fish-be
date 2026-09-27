@@ -1,4 +1,5 @@
 const Pond = require("../models/pond");
+const Crop = require("../models/crop");
 const LogTracking = require("../models/logTracking");
 const logTrackingService = require("../services/logTracking.service");
 
@@ -6,6 +7,7 @@ const MESSAGE_EMPTY_NAME = "Tên ao không được để trống!";
 const MESSAGE_DUPLICATE_NAME = "Tên ao đã tồn tại!";
 const MESSAGE_INVALID_AREA = "Diện tích ao không hợp lệ!";
 const MESSAGE_NOT_FOUND = "Không tìm thấy dữ liệu!";
+const MESSAGE_HAS_OPEN_CROP = "Ao đang có vụ nuôi, hãy kết thúc vụ trước!";
 
 // Giá trị "không hợp lệ" để phân biệt với null (bỏ trống)
 const INVALID = Symbol("invalid");
@@ -141,6 +143,10 @@ const updatePond = async (pondId, pondData) => {
  */
 const deletePond = async (pondId) => {
   try {
+    if (await Crop.exists({ pond: pondId, status: "open", isDelete: false })) {
+      await writeLog(`Xóa ao: '${pondId}' không thành công`, { message: MESSAGE_HAS_OPEN_CROP });
+      return { ok: false, message: MESSAGE_HAS_OPEN_CROP };
+    }
     let result = await Pond.findOneAndUpdate({ _id: pondId, isDelete: false }, { isDelete: true }, { new: true });
     if (!result) {
       await writeLog(`Xóa ao: '${pondId}' không thành công`, { message: MESSAGE_NOT_FOUND });

@@ -80,3 +80,13 @@ test("id không tồn tại", async () => {
   expect((await update("khong-co", { pondName: "X" })).body.message).toBe("Không tìm thấy dữ liệu!");
   expect((await remove("khong-co")).body.message).toBe("Không tìm thấy dữ liệu!");
 });
+
+test("không xóa ao đang có vụ mở; vụ đã kết thúc thì xóa được", async () => {
+  const Crop = require("../app/models/crop");
+  const pond = await Pond.create({ pondName: "Ao 1" });
+  const crop = await Crop.create({ pond: pond._id, cropName: "Vụ", startDate: new Date("2026-01-01") });
+  expect((await remove(pond._id)).body.message).toBe("Ao đang có vụ nuôi, hãy kết thúc vụ trước!");
+
+  await Crop.updateOne({ _id: crop._id }, { status: "closed", endDate: new Date("2026-06-01") });
+  expect((await remove(pond._id)).body.success).toBe(true);
+});

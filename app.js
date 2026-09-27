@@ -30,5 +30,6 @@ require("./app/routes/basketType.routes")(app);
 require("./app/routes/logTracking.routes")(app);
 require("./app/routes/weighSession.routes")(app);
 require("./app/routes/pond.routes")(app);
+require("./app/routes/crop.routes")(app);
 
 module.exports = app;
