@@ -40,3 +40,11 @@ test("seedDemoData tạo Ao 1 (có vụ mở, gắn phiên demo) và Ao 2 (chưa
   expect(crops[0].status).toBe("open");
   expect((await WeighSession.findOne({ status: "open" })).crop).toBe(crops[0]._id);
 });
+
+test("seedDemoData tạo 6 nhóm chi mặc định", async () => {
+  const ExpenseCategory = require("../app/models/expenseCategory");
+  jest.spyOn(console, "log").mockImplementation(() => {});
+  await seedDemoData();
+  expect(await ExpenseCategory.countDocuments()).toBe(6);
+  jest.restoreAllMocks();
+});

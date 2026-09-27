@@ -36,6 +36,9 @@ const seedDemoData = async () => {
   const crop = await cropService.createCrop({ pondId: ao1.data._id });
   const session = await weighSessionService.getOrCreateOpenSession();
   await weighSessionService.updateSessionCrop(session._id, crop.data._id);
+
+  const { seedExpenseCategories } = require("./seed-expense-categories");
+  await seedExpenseCategories({ dryRun: false });
 };
 
 const main = async () => {

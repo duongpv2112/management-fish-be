@@ -31,5 +31,6 @@ require("./app/routes/logTracking.routes")(app);
 require("./app/routes/weighSession.routes")(app);
 require("./app/routes/pond.routes")(app);
 require("./app/routes/crop.routes")(app);
+require("./app/routes/expenseCategory.routes")(app);
 
 module.exports = app;
