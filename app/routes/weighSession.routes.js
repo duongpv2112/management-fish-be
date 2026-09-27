@@ -17,5 +17,7 @@ module.exports = (app) => {
 
   router.put("/updateSessionCurrency/:sessionId", weighSessionController.updateSessionCurrency);
 
+  router.put("/updateSessionCrop/:sessionId", weighSessionController.updateSessionCrop);
+
   app.use("/api/weigh-sessions", router);
 };

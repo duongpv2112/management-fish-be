@@ -26,3 +26,39 @@ test("seedDemoData không tạo trùng khi DB đã có dữ liệu", async () =>
   expect(await FishType.countDocuments()).toBe(2);
   expect(await FishWeight.countDocuments()).toBe(2);
 });
+
+test("seedDemoData tạo Ao 1 (có vụ mở, gắn phiên demo) và Ao 2 (chưa có vụ)", async () => {
+  const Pond = require("../app/models/pond");
+  const Crop = require("../app/models/crop");
+  const WeighSession = require("../app/models/weighSession");
+  await seedDemoData();
+
+  expect((await Pond.find().sort({ createdAt: 1 })).map((p) => p.pondName)).toEqual(["Ao 1", "Ao 2"]);
+  const crops = await Crop.find().populate("pond");
+  expect(crops).toHaveLength(1);
+  expect(crops[0].pond.pondName).toBe("Ao 1");
+  expect(crops[0].status).toBe("open");
+  expect((await WeighSession.findOne({ status: "open" })).crop).toBe(crops[0]._id);
+});
+
+test("seedDemoData tạo 6 nhóm chi mặc định", async () => {
+  const ExpenseCategory = require("../app/models/expenseCategory");
+  jest.spyOn(console, "log").mockImplementation(() => {});
+  await seedDemoData();
+  expect(await ExpenseCategory.countDocuments()).toBe(6);
+  jest.restoreAllMocks();
+});
+
+test("seedDemoData tạo khoản chi mẫu: giống và cám cho vụ Ao 1, điện chung", async () => {
+  const Expense = require("../app/models/expense");
+  const Crop = require("../app/models/crop");
+  jest.spyOn(console, "log").mockImplementation(() => {});
+  await seedDemoData();
+  const crop = await Crop.findOne({ status: "open" });
+  const expenses = await Expense.find().sort({ amount: 1 });
+  expect(expenses.map((e) => e.amount)).toEqual([600000, 4000000, 3500000].sort((a, b) => a - b));
+  expect(expenses.filter((e) => e.crop === crop._id)).toHaveLength(2);
+  expect(expenses.find((e) => e.crop === null).amount).toBe(600000);
+  expect(expenses.find((e) => e.kgPerUnit === 25).quantity).toBe(10);
+  jest.restoreAllMocks();
+});

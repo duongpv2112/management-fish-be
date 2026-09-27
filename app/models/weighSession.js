@@ -56,6 +56,12 @@ const weighSessionSchema = new Schema(
       type: String,
       default: "",
     },
+    // Vụ nuôi (của một ao) mà phiên bán này thuộc về; null = chưa chọn ao
+    crop: {
+      type: String,
+      ref: "crop",
+      default: null,
+    },
     isDelete: {
       type: Boolean,
       default: false,
