@@ -264,7 +264,7 @@ const updateSessionCrop = async (sessionId, cropId) => {
   }
 };
 
-const round2 =(value) => Math.round(value * 100) / 100;
+const round2 = (value) => Math.round(value * 100) / 100;
 
 /**
  * Tổng hợp tiền của một phiên theo loại cá.
